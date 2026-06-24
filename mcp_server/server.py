@@ -22,7 +22,6 @@ from mcp.server.fastmcp import FastMCP
 
 from .device_registry import DeviceRegistry
 from .sessions.pool import ConnectionPool
-from .registers.reg_db import get_reg_db
 from .tools import register_all
 
 # ── Global state ──────────────────────────────────────────────────────────────
@@ -34,15 +33,6 @@ CONFIG_PATH = os.environ.get(
 
 registry = DeviceRegistry(CONFIG_PATH)
 pool = ConnectionPool()
-
-# ── Register database (lazy-load example files) ──────────────────────────────
-
-_reg_db = get_reg_db(os.path.join(os.path.dirname(__file__), "registers"))
-for _reg_file in ["eth_mac_regs.json"]:
-    try:
-        _reg_db.load(_reg_file)
-    except FileNotFoundError:
-        pass
 
 # ── FastMCP app ───────────────────────────────────────────────────────────────
 
@@ -79,7 +69,7 @@ mcp = FastMCP(
 )
 
 # Register all domain tools
-register_all(mcp, pool, registry=registry, reg_db=_reg_db)
+register_all(mcp, pool, registry=registry)
 
 # ── Entry point ───────────────────────────────────────────────────────────────
 
