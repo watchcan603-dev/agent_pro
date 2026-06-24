@@ -1,0 +1,1120 @@
+{
+  "chip": "Rockchip RK3568 GMAC (DesignWare Ethernet)",
+  "version": "1.0",
+  "description": "Ethernet MAC registers for Rockchip RK3568 GMAC0 at 0xFE010000",
+  "blocks": [
+    {
+      "name": "gmac_mac",
+      "description": "MAC Configuration Registers — link control, frame filtering, flow control",
+      "base_address": "0xFE010000",
+      "registers": [
+        {
+          "name": "GMAC_MAC_CONFIG",
+          "offset": "0x0000",
+          "address": "0xFE010000",
+          "width": 32,
+          "access": "RW",
+          "description": "MAC Configuration — main control register for RX/TX enable, promiscuous mode, etc.",
+          "fields": [
+            {
+              "name": "RE",
+              "bits": "0",
+              "description": "Receiver Enable. 0=RX disabled, 1=RX enabled"
+            },
+            {
+              "name": "TE",
+              "bits": "1",
+              "description": "Transmitter Enable. 0=TX disabled, 1=TX enabled"
+            },
+            {
+              "name": "PRELEN",
+              "bits": "4:2",
+              "description": "Preamble Length (0=7 bytes)"
+            },
+            {
+              "name": "DC",
+              "bits": "5",
+              "description": "Deferral Check. 0=disabled, 1=enabled (half-duplex)"
+            },
+            {
+              "name": "BL",
+              "bits": "7:6",
+              "description": "Back-off Limit. 0=immediate retry"
+            },
+            {
+              "name": "DR",
+              "bits": "8",
+              "description": "Disable Retry. 1=only one transmission attempt"
+            },
+            {
+              "name": "DCRS",
+              "bits": "9",
+              "description": "Disable Carrier Sense During Transmission"
+            },
+            {
+              "name": "DO",
+              "bits": "10",
+              "description": "Disable Receive Own. 0=receive own packets (loopback)"
+            },
+            {
+              "name": "ECRSFD",
+              "bits": "11",
+              "description": "Enable Carrier Sense Before TX in Full Duplex"
+            },
+            {
+              "name": "LM",
+              "bits": "12",
+              "description": "Loopback Mode. 1=internal loopback enabled"
+            },
+            {
+              "name": "DM",
+              "bits": "13",
+              "description": "Duplex Mode. 0=half-duplex, 1=full-duplex"
+            },
+            {
+              "name": "FES",
+              "bits": "14",
+              "description": "Fast Ethernet Speed. 0=10Mbps, 1=100Mbps"
+            },
+            {
+              "name": "PS",
+              "bits": "15",
+              "description": "Port Select. 0=MII, 1=RMII"
+            },
+            {
+              "name": "JE",
+              "bits": "16",
+              "description": "Jumbo Frame Enable"
+            },
+            {
+              "name": "JF",
+              "bits": "17",
+              "description": "Jabber Disable"
+            },
+            {
+              "name": "WD",
+              "bits": "19",
+              "description": "Watchdog Disable"
+            },
+            {
+              "name": "ACS",
+              "bits": "20",
+              "description": "Automatic Pad/CRC Stripping"
+            },
+            {
+              "name": "CST",
+              "bits": "21",
+              "description": "CRC Stripping for Type frames"
+            },
+            {
+              "name": "SARC",
+              "bits": "23:22",
+              "description": "Source Address Replacement Control"
+            },
+            {
+              "name": "IPG",
+              "bits": "27:24",
+              "description": "Inter-Packet Gap (default=96 bit times)"
+            },
+            {
+              "name": "IPC",
+              "bits": "27",
+              "description": "Checksum Offload. 1=enabled"
+            },
+            {
+              "name": "S2KP",
+              "bits": "31",
+              "description": "IEEE 802.3as Support"
+            }
+          ],
+          "notes": "Key register for link status. TE and RE must both be set for normal operation.",
+          "error_values": {
+            "RE=0": "接收器未使能 — 无法接收任何帧",
+            "TE=0": "发送器未使能 — 无法发送帧",
+            "DM=0": "半双工模式 — 检查是否期望的全双工",
+            "LM=1": "内部环回模式开启 — 正常通信时应该关闭"
+          }
+        },
+        {
+          "name": "GMAC_MAC_FRAME_FILTER",
+          "offset": "0x0004",
+          "address": "0xFE010004",
+          "width": 32,
+          "access": "RW",
+          "description": "MAC Frame Filter — controls which frames are accepted",
+          "fields": [
+            {
+              "name": "PR",
+              "bits": "0",
+              "description": "Promiscuous Mode. 1=receive all frames"
+            },
+            {
+              "name": "HUC",
+              "bits": "1",
+              "description": "Hash Unicast"
+            },
+            {
+              "name": "HMC",
+              "bits": "2",
+              "description": "Hash Multicast"
+            },
+            {
+              "name": "DAIF",
+              "bits": "3",
+              "description": "Destination Address Inverse Filtering"
+            },
+            {
+              "name": "PM",
+              "bits": "4",
+              "description": "Pass All Multicast"
+            },
+            {
+              "name": "DBF",
+              "bits": "5",
+              "description": "Disable Broadcast Frames"
+            },
+            {
+              "name": "PBF",
+              "bits": "6",
+              "description": "Pass Bad Frames (for debug)"
+            },
+            {
+              "name": "SAIF",
+              "bits": "7",
+              "description": "Source Address Inverse Filtering"
+            },
+            {
+              "name": "SAF",
+              "bits": "8",
+              "description": "Source Address Filtering"
+            },
+            {
+              "name": "HPF",
+              "bits": "9",
+              "description": "Hash or Perfect Filter"
+            },
+            {
+              "name": "RA",
+              "bits": "31",
+              "description": "Receive All (promisc + bad frames)"
+            }
+          ],
+          "notes": "PBF=1 is useful for detecting CRC errors / bad frames",
+          "error_values": {
+            "PBF=1": "正在接收错误帧 — 检查 CRC 错误计数器",
+            "DBF=1": "广播帧被丢弃 — 如果需要 ARP/DHCP 请检查"
+          }
+        },
+        {
+          "name": "GMAC_HASHTABLE_HIGH",
+          "offset": "0x0008",
+          "address": "0xFE010008",
+          "width": 32,
+          "access": "RW",
+          "description": "Hash Table High — bits 63:32 of the multicast hash filter",
+          "fields": []
+        },
+        {
+          "name": "GMAC_HASHTABLE_LOW",
+          "offset": "0x000C",
+          "address": "0xFE01000C",
+          "width": 32,
+          "access": "RW",
+          "description": "Hash Table Low — bits 31:0 of the multicast hash filter",
+          "fields": []
+        },
+        {
+          "name": "GMAC_GMII_ADDR",
+          "offset": "0x0010",
+          "address": "0xFE010010",
+          "width": 32,
+          "access": "RW",
+          "description": "GMII/MII Address — controls MDIO access to external PHY registers",
+          "fields": [
+            {
+              "name": "GB",
+              "bits": "0",
+              "description": "MII Busy. 1=MDIO transaction in progress"
+            },
+            {
+              "name": "GW",
+              "bits": "1",
+              "description": "MII Write. 1=Write, 0=Read"
+            },
+            {
+              "name": "CR",
+              "bits": "4:2",
+              "description": "Clock Rate (0=system_clk/42, 1=/62, 2=/16, 3=/26)"
+            },
+            {
+              "name": "GR",
+              "bits": "9:5",
+              "description": "PHY Register Address (0-31)"
+            },
+            {
+              "name": "PA",
+              "bits": "14:10",
+              "description": "PHY Address (0-31, usually 0-3)"
+            }
+          ],
+          "notes": "MDIO 访问 PHY 寄存器的控制寄存器。GA bit 16-31 在 GMAC_GMII_DATA 中。",
+          "error_values": {
+            "GB=1": "MDIO 操作未完成 — 可能 PHY 无响应，检查 MDIO 线连接"
+          }
+        },
+        {
+          "name": "GMAC_GMII_DATA",
+          "offset": "0x0014",
+          "address": "0xFE010014",
+          "width": 32,
+          "access": "RW",
+          "description": "GMII/MII Data — MDIO read/write data",
+          "fields": [
+            {
+              "name": "GD",
+              "bits": "15:0",
+              "description": "PHY Register Data (16-bit)"
+            }
+          ],
+          "notes": "与 GMAC_GMII_ADDR 配合使用进行 MDIO 读写"
+        },
+        {
+          "name": "GMAC_FLOW_CTRL",
+          "offset": "0x0018",
+          "address": "0xFE010018",
+          "width": 32,
+          "access": "RW",
+          "description": "Flow Control — 802.3x pause frame control",
+          "fields": [
+            {
+              "name": "FCB",
+              "bits": "0",
+              "description": "Flow Control Busy (backpressure for half-duplex)"
+            },
+            {
+              "name": "TFE",
+              "bits": "1",
+              "description": "Transmit Flow Control Enable"
+            },
+            {
+              "name": "RFE",
+              "bits": "2",
+              "description": "Receive Flow Control Enable"
+            },
+            {
+              "name": "UP",
+              "bits": "3",
+              "description": "Unicast Pause Frame Detect"
+            },
+            {
+              "name": "PLT",
+              "bits": "6:4",
+              "description": "Pause Low Threshold"
+            },
+            {
+              "name": "DZPQ",
+              "bits": "7",
+              "description": "Disable Zero-Quanta Pause"
+            },
+            {
+              "name": "PT",
+              "bits": "31:16",
+              "description": "Pause Time value for transmitted pause frames"
+            }
+          ],
+          "error_values": {
+            "RFE=0": "接收流控关闭 — 可能因流控导致丢包",
+            "TFE=0": "发送流控关闭 — 不能发送 pause 帧"
+          }
+        },
+        {
+          "name": "GMAC_INT_STATUS",
+          "offset": "0x0038",
+          "address": "0xFE010038",
+          "width": 32,
+          "access": "RO/W1C",
+          "description": "Interrupt Status — indicates which interrupt events have occurred",
+          "fields": [
+            {
+              "name": "RGMII",
+              "bits": "0",
+              "description": "RGMII/SGMII interrupt (PHY status change)"
+            },
+            {
+              "name": "PCSL",
+              "bits": "1",
+              "description": "PCS Link Status Changed"
+            },
+            {
+              "name": "PCSANC",
+              "bits": "2",
+              "description": "PCS Auto-Negotiation Complete"
+            },
+            {
+              "name": "PMT",
+              "bits": "3",
+              "description": "PMT interrupt (wake-on-LAN)"
+            },
+            {
+              "name": "LPI",
+              "bits": "5",
+              "description": "LPI interrupt (EEE)"
+            },
+            {
+              "name": "PHY",
+              "bits": "9",
+              "description": "PHY interrupt"
+            },
+            {
+              "name": "NIS",
+              "bits": "16",
+              "description": "Normal Interrupt Summary (TX/RX status)"
+            },
+            {
+              "name": "AIS",
+              "bits": "17",
+              "description": "Abnormal Interrupt Summary (error events)"
+            },
+            {
+              "name": "TS",
+              "bits": "18",
+              "description": "Timestamp interrupt"
+            }
+          ],
+          "notes": "AIS=1 表示有异常事件发生，需要进一步检查错误寄存器"
+        }
+      ]
+    },
+    {
+      "name": "gmac_dma",
+      "description": "DMA Registers — data transfer, descriptor management, error counters",
+      "base_address": "0xFE011000",
+      "registers": [
+        {
+          "name": "GMAC_DMA_BUS_MODE",
+          "offset": "0x0000",
+          "address": "0xFE011000",
+          "width": 32,
+          "access": "RW",
+          "description": "DMA Bus Mode — controls DMA operation mode and AXI bus parameters",
+          "fields": [
+            {
+              "name": "SWR",
+              "bits": "0",
+              "description": "Software Reset. 1=reset DMA, self-clears"
+            },
+            {
+              "name": "DA",
+              "bits": "1",
+              "description": "DMA Arbitration scheme"
+            },
+            {
+              "name": "DSL",
+              "bits": "4:2",
+              "description": "Descriptor Skip Length"
+            },
+            {
+              "name": "ATDS",
+              "bits": "7",
+              "description": "Alternate Descriptor Size. 0=4 words, 1=8 words"
+            },
+            {
+              "name": "PBL",
+              "bits": "13:8",
+              "description": "Programmable Burst Length"
+            },
+            {
+              "name": "PR",
+              "bits": "15:14",
+              "description": "Priority Ratio between RX and TX"
+            },
+            {
+              "name": "FB",
+              "bits": "16",
+              "description": "Fixed Burst. 1=use PBL, 0=auto"
+            },
+            {
+              "name": "RPBL",
+              "bits": "22:17",
+              "description": "RX Programmable Burst Length"
+            },
+            {
+              "name": "USP",
+              "bits": "23",
+              "description": "Use Separate PBL for RX/TX"
+            },
+            {
+              "name": "FPM_8xPBL",
+              "bits": "24",
+              "description": "4xPBL or 8xPBL mode"
+            },
+            {
+              "name": "AAL",
+              "bits": "26",
+              "description": "Address Aligned Beats"
+            },
+            {
+              "name": "MB",
+              "bits": "27",
+              "description": "Mixed Burst. 1=enable"
+            },
+            {
+              "name": "TXPR",
+              "bits": "28",
+              "description": "TX Priority"
+            },
+            {
+              "name": "RIB",
+              "bits": "31",
+              "description": "Rebuild INCRx Burst"
+            }
+          ]
+        },
+        {
+          "name": "GMAC_DMA_STATUS",
+          "offset": "0x0014",
+          "address": "0xFE011014",
+          "width": 32,
+          "access": "RO",
+          "description": "DMA Status — current DMA state and error flags",
+          "fields": [
+            {
+              "name": "TI",
+              "bits": "0",
+              "description": "Transmit Interrupt"
+            },
+            {
+              "name": "TPS",
+              "bits": "1",
+              "description": "Transmit Process Stopped. 1=TX engine halted"
+            },
+            {
+              "name": "TU",
+              "bits": "2",
+              "description": "Transmit Underflow"
+            },
+            {
+              "name": "TJT",
+              "bits": "3",
+              "description": "Transmit Jabber Timeout"
+            },
+            {
+              "name": "OVF",
+              "bits": "4",
+              "description": "Receive Overflow"
+            },
+            {
+              "name": "UNF",
+              "bits": "5",
+              "description": "Transmit Underflow"
+            },
+            {
+              "name": "RI",
+              "bits": "6",
+              "description": "Receive Interrupt"
+            },
+            {
+              "name": "RU",
+              "bits": "7",
+              "description": "Receive Buffer Unavailable"
+            },
+            {
+              "name": "RPS",
+              "bits": "8",
+              "description": "Receive Process Stopped"
+            },
+            {
+              "name": "RWT",
+              "bits": "9",
+              "description": "Receive Watchdog Timeout"
+            },
+            {
+              "name": "ETI",
+              "bits": "10",
+              "description": "Early Transmit Interrupt"
+            },
+            {
+              "name": "FBI",
+              "bits": "13",
+              "description": "Fatal Bus Error Interrupt"
+            },
+            {
+              "name": "NIS",
+              "bits": "16",
+              "description": "Normal Interrupt Summary"
+            },
+            {
+              "name": "AIS",
+              "bits": "17",
+              "description": "Abnormal Interrupt Summary"
+            },
+            {
+              "name": "EB",
+              "bits": "23:20",
+              "description": "Error Bits — AXI bus error code"
+            },
+            {
+              "name": "GMAC_TS",
+              "bits": "25",
+              "description": "Timestamp Interrupt"
+            },
+            {
+              "name": "TTSS",
+              "bits": "26",
+              "description": "Tx Timestamp Status"
+            }
+          ],
+          "error_values": {
+            "TPS=1": "TX 引擎已停止 — 检查 TX 描述符链表",
+            "RPS=1": "RX 引擎已停止 — 检查 RX 缓冲区描述符",
+            "TU=1": "TX Underflow — FIFO 数据不足，检查 DMA 带宽",
+            "OVF=1": "RX Overflow — 接收 FIFO 溢出，数据包丢失",
+            "FBI=1": "AXI 总线致命错误 — 检查总线连接和内存",
+            "RU=1": "RX Buffer Unavailable — 无可用接收缓冲区",
+            "UNF=1": "TX Underflow — 同 TU"
+          }
+        },
+        {
+          "name": "GMAC_MISSED_FRAME_CNT",
+          "offset": "0x004C",
+          "address": "0xFE01104C",
+          "width": 32,
+          "access": "RO",
+          "description": "Missed Frame and Buffer Overflow Counter",
+          "fields": [
+            {
+              "name": "MISFRMCNT",
+              "bits": "15:0",
+              "description": "Missed Frame Count — frames dropped due to no host buffer"
+            },
+            {
+              "name": "OVFFRMCNT",
+              "bits": "27:16",
+              "description": "Overflow Frame Count — frames dropped due to FIFO overflow"
+            },
+            {
+              "name": "OVFCNTOVF",
+              "bits": "28",
+              "description": "Overflow bit for missed frame counter"
+            }
+          ],
+          "error_values": {
+            "MISFRMCNT>0": "主机来不及提供接收缓冲区 — 检查驱动 RX 队列",
+            "OVFFRMCNT>0": "RX FIFO 溢出 — 检查 DMA 配置和总线带宽"
+          }
+        }
+      ]
+    },
+    {
+      "name": "gmac_stats",
+      "description": "MMC Statistics Registers (IEEE 802.3) — packet counters for diagnostics",
+      "base_address": "0xFE010100",
+      "registers": [
+        {
+          "name": "GMAC_MMC_TX_INTR",
+          "offset": "0x0000",
+          "address": "0xFE010100",
+          "width": 32,
+          "access": "RO",
+          "description": "MMC Transmit Interrupt — TX statistics interrupt flags",
+          "fields": [
+            {
+              "name": "TXSCOLGIS",
+              "bits": "14",
+              "description": "TX Single Collision"
+            },
+            {
+              "name": "TXMCOLGIS",
+              "bits": "15",
+              "description": "TX Multiple Collisions"
+            },
+            {
+              "name": "TXOCTGIS",
+              "bits": "18",
+              "description": "TX Octet Count Good — half-full interrupt"
+            },
+            {
+              "name": "TXUNFIS",
+              "bits": "21",
+              "description": "TX Underflow Error"
+            },
+            {
+              "name": "TXJABIS",
+              "bits": "24",
+              "description": "TX Jabber Error"
+            },
+            {
+              "name": "TXOVFIS",
+              "bits": "25",
+              "description": "TX Overflow Error"
+            }
+          ]
+        },
+        {
+          "name": "GMAC_MMC_RX_INTR",
+          "offset": "0x0004",
+          "address": "0xFE010104",
+          "width": 32,
+          "access": "RO",
+          "description": "MMC Receive Interrupt — RX statistics interrupt flags",
+          "fields": [
+            {
+              "name": "RXCRCIS",
+              "bits": "1",
+              "description": "RX CRC Error"
+            },
+            {
+              "name": "RXALGNIS",
+              "bits": "2",
+              "description": "RX Alignment Error"
+            },
+            {
+              "name": "RXUCIS",
+              "bits": "5",
+              "description": "RX Unicast Good"
+            },
+            {
+              "name": "RXOCTGIS",
+              "bits": "18",
+              "description": "RX Octet Count Good — half-full"
+            },
+            {
+              "name": "RXOVFIS",
+              "bits": "21",
+              "description": "RX Overflow Error"
+            }
+          ]
+        },
+        {
+          "name": "GMAC_MMC_RX_CRC_ERR",
+          "offset": "0x0194",
+          "address": "0xFE010294",
+          "width": 32,
+          "access": "RO",
+          "description": "MMC RX CRC Error Counter — number of frames received with CRC errors",
+          "fields": [
+            {
+              "name": "RXCRCERR",
+              "bits": "31:0",
+              "description": "CRC Error Frame Count"
+            }
+          ],
+          "error_values": {
+            "RXCRCERR>0": "CRC 错误 — 检查物理链路质量、终端匹配、EMC 干扰"
+          }
+        },
+        {
+          "name": "GMAC_MMC_RX_ALIGN_ERR",
+          "offset": "0x0198",
+          "address": "0xFE010298",
+          "width": 32,
+          "access": "RO",
+          "description": "MMC RX Alignment Error Counter — frames not ending on byte boundary",
+          "fields": [
+            {
+              "name": "RXALGNERR",
+              "bits": "31:0",
+              "description": "Alignment Error Frame Count"
+            }
+          ],
+          "error_values": {
+            "RXALGNERR>0": "对齐错误 — 通常伴随 CRC 错误，检查 MII 接口时序"
+          }
+        },
+        {
+          "name": "GMAC_MMC_RX_FIFO_OVF",
+          "offset": "0x01C4",
+          "address": "0xFE0102C4",
+          "width": 32,
+          "access": "RO",
+          "description": "MMC RX FIFO Overflow Counter",
+          "fields": [
+            {
+              "name": "RXFIFOOVF",
+              "bits": "31:0",
+              "description": "RX FIFO Overflow Count"
+            }
+          ],
+          "error_values": {
+            "RXFIFOOVF>0": "RX FIFO 溢出 — 系统来不及读取数据，检查 DMA 和中断延迟"
+          }
+        }
+      ]
+    },
+    {
+      "name": "phy",
+      "description": "External PHY Registers (IEEE 802.3 Clause 22 MDIO) — physical layer status",
+      "base_address": "MDIO",
+      "registers": [
+        {
+          "name": "PHY_BMCR",
+          "offset": "0x00",
+          "address": "PHY_REG_0x00",
+          "width": 16,
+          "access": "RW",
+          "description": "Basic Mode Control Register — PHY 基本控制",
+          "fields": [
+            {
+              "name": "RESET",
+              "bits": "15",
+              "description": "PHY Reset. 1=reset, self-clears"
+            },
+            {
+              "name": "LOOPBACK",
+              "bits": "14",
+              "description": "Loopback Mode"
+            },
+            {
+              "name": "SPEED_LSB",
+              "bits": "13",
+              "description": "Speed Select (LSB)"
+            },
+            {
+              "name": "AN_ENABLE",
+              "bits": "12",
+              "description": "Auto-Negotiation Enable. 1=enabled"
+            },
+            {
+              "name": "POWER_DOWN",
+              "bits": "11",
+              "description": "Power Down. 1=power down mode"
+            },
+            {
+              "name": "ISOLATE",
+              "bits": "10",
+              "description": "Isolate. 1=electrically isolated from MII"
+            },
+            {
+              "name": "RESTART_AN",
+              "bits": "9",
+              "description": "Restart Auto-Negotiation"
+            },
+            {
+              "name": "DUPLEX",
+              "bits": "8",
+              "description": "Duplex Mode. 0=half, 1=full"
+            },
+            {
+              "name": "COLLISION_TEST",
+              "bits": "7",
+              "description": "Collision Test"
+            },
+            {
+              "name": "SPEED_MSB",
+              "bits": "6",
+              "description": "Speed Select (MSB)"
+            }
+          ],
+          "error_values": {
+            "POWER_DOWN=1": "PHY 处于省电模式 — 链路必然 DOWN",
+            "ISOLATE=1": "PHY 电气隔离 — MII 接口断开",
+            "AN_ENABLE=0": "自协商关闭 — 可能需要手动配置速率双工"
+          }
+        },
+        {
+          "name": "PHY_BMSR",
+          "offset": "0x01",
+          "address": "PHY_REG_0x01",
+          "width": 16,
+          "access": "RO",
+          "description": "Basic Mode Status Register — PHY 状态和能力",
+          "fields": [
+            {
+              "name": "AN_COMPLETE",
+              "bits": "5",
+              "description": "Auto-Negotiation Complete"
+            },
+            {
+              "name": "REMOTE_FAULT",
+              "bits": "4",
+              "description": "Remote Fault detected"
+            },
+            {
+              "name": "AN_ABLE",
+              "bits": "3",
+              "description": "Auto-Negotiation Ability"
+            },
+            {
+              "name": "LINK_STATUS",
+              "bits": "2",
+              "description": "Link Status. 1=link up, 0=link down"
+            },
+            {
+              "name": "JABBER_DETECT",
+              "bits": "1",
+              "description": "Jabber Detect"
+            },
+            {
+              "name": "EXT_CAP",
+              "bits": "0",
+              "description": "Extended Capability"
+            }
+          ],
+          "error_values": {
+            "LINK_STATUS=0": "物理链路 DOWN — 最基础的故障，检查网线、PHY 供电、时钟",
+            "AN_COMPLETE=0": "自协商未完成 — 可能对端不支持自协商或速率不匹配",
+            "REMOTE_FAULT=1": "对端报告故障 — 检查对端设备状态"
+          }
+        },
+        {
+          "name": "PHY_PHYID1",
+          "offset": "0x02",
+          "address": "PHY_REG_0x02",
+          "width": 16,
+          "access": "RO",
+          "description": "PHY Identifier 1 — OUI bits 3:18",
+          "fields": []
+        },
+        {
+          "name": "PHY_PHYID2",
+          "offset": "0x03",
+          "address": "PHY_REG_0x03",
+          "width": 16,
+          "access": "RO",
+          "description": "PHY Identifier 2 — OUI bits 19:24 + model + revision",
+          "fields": []
+        },
+        {
+          "name": "PHY_AN_ADV",
+          "offset": "0x04",
+          "address": "PHY_REG_0x04",
+          "width": 16,
+          "access": "RW",
+          "description": "Auto-Negotiation Advertisement — 告诉对端本端支持的模式",
+          "fields": [
+            {
+              "name": "NEXT_PAGE",
+              "bits": "15",
+              "description": "Next Page"
+            },
+            {
+              "name": "REMOTE_FAULT_ADV",
+              "bits": "13",
+              "description": "Remote Fault"
+            },
+            {
+              "name": "PAUSE",
+              "bits": "11:10",
+              "description": "Pause Frame capability"
+            },
+            {
+              "name": "100BT4",
+              "bits": "9",
+              "description": "100BASE-T4 support"
+            },
+            {
+              "name": "100BTX_FD",
+              "bits": "8",
+              "description": "100BASE-TX Full Duplex"
+            },
+            {
+              "name": "100BTX_HD",
+              "bits": "7",
+              "description": "100BASE-TX Half Duplex"
+            },
+            {
+              "name": "10BT_FD",
+              "bits": "6",
+              "description": "10BASE-T Full Duplex"
+            },
+            {
+              "name": "10BT_HD",
+              "bits": "5",
+              "description": "10BASE-T Half Duplex"
+            },
+            {
+              "name": "SELECTOR",
+              "bits": "4:0",
+              "description": "Selector Field (0x01=802.3)"
+            }
+          ]
+        },
+        {
+          "name": "PHY_AN_LPA",
+          "offset": "0x05",
+          "address": "PHY_REG_0x05",
+          "width": 16,
+          "access": "RO",
+          "description": "Auto-Negotiation Link Partner Ability — 对端宣告的能力",
+          "fields": [
+            {
+              "name": "LPA_PAUSE",
+              "bits": "11:10",
+              "description": "Link Partner Pause capability"
+            },
+            {
+              "name": "LPA_100BTX_FD",
+              "bits": "8",
+              "description": "Link Partner 100BASE-TX Full Duplex"
+            },
+            {
+              "name": "LPA_100BTX_HD",
+              "bits": "7",
+              "description": "Link Partner 100BASE-TX Half Duplex"
+            },
+            {
+              "name": "LPA_10BT_FD",
+              "bits": "6",
+              "description": "Link Partner 10BASE-T Full Duplex"
+            },
+            {
+              "name": "LPA_10BT_HD",
+              "bits": "5",
+              "description": "Link Partner 10BASE-T Half Duplex"
+            }
+          ],
+          "notes": "与 PHY_AN_ADV 比较，确认双方协商出最高共同速率"
+        },
+        {
+          "name": "PHY_AN_EXP",
+          "offset": "0x06",
+          "address": "PHY_REG_0x06",
+          "width": 16,
+          "access": "RO",
+          "description": "Auto-Negotiation Expansion",
+          "fields": [
+            {
+              "name": "PAR_DET_FAULT",
+              "bits": "4",
+              "description": "Parallel Detection Fault. 1=failed"
+            },
+            {
+              "name": "LP_AN_ABLE",
+              "bits": "1",
+              "description": "Link Partner is Auto-Negotiation able"
+            },
+            {
+              "name": "PAGE_RECEIVED",
+              "bits": "0",
+              "description": "Page Received"
+            }
+          ],
+          "error_values": {
+            "PAR_DET_FAULT=1": "并行检测失败 — 对端可能不支持自协商或速率不匹配",
+            "LP_AN_ABLE=0": "对端不支持自协商 — 需要手动配置速率双工"
+          }
+        },
+        {
+          "name": "PHY_1000_CTRL",
+          "offset": "0x09",
+          "address": "PHY_REG_0x09",
+          "width": 16,
+          "access": "RW",
+          "description": "1000BASE-T Control Register",
+          "fields": [
+            {
+              "name": "TEST_MODE",
+              "bits": "15:13",
+              "description": "Test Mode"
+            },
+            {
+              "name": "MS_MANUAL",
+              "bits": "12",
+              "description": "Master/Slave Manual Config"
+            },
+            {
+              "name": "MS_VALUE",
+              "bits": "11",
+              "description": "Master(1) or Slave(0)"
+            },
+            {
+              "name": "PORT_TYPE",
+              "bits": "10",
+              "description": "Port Type. 0=single, 1=multi"
+            },
+            {
+              "name": "1000BT_FD",
+              "bits": "9",
+              "description": "1000BASE-T Full Duplex advertise"
+            },
+            {
+              "name": "1000BT_HD",
+              "bits": "8",
+              "description": "1000BASE-T Half Duplex advertise"
+            }
+          ]
+        },
+        {
+          "name": "PHY_1000_STATUS",
+          "offset": "0x0A",
+          "address": "PHY_REG_0x0A",
+          "width": 16,
+          "access": "RO",
+          "description": "1000BASE-T Status Register",
+          "fields": [
+            {
+              "name": "MS_FAULT",
+              "bits": "15",
+              "description": "Master/Slave Configuration Fault"
+            },
+            {
+              "name": "MS_RESOLVED",
+              "bits": "14",
+              "description": "Master/Slave Configuration Resolved"
+            },
+            {
+              "name": "LOCAL_RX_OK",
+              "bits": "13",
+              "description": "Local Receiver OK"
+            },
+            {
+              "name": "REMOTE_RX_OK",
+              "bits": "12",
+              "description": "Remote Receiver OK"
+            },
+            {
+              "name": "LP_1000BT_FD",
+              "bits": "11",
+              "description": "Link Partner 1000BASE-T Full Duplex"
+            },
+            {
+              "name": "LP_1000BT_HD",
+              "bits": "10",
+              "description": "Link Partner 1000BASE-T Half Duplex"
+            },
+            {
+              "name": "IDLE_ERR_CNT",
+              "bits": "7:0",
+              "description": "Idle Error Count"
+            }
+          ],
+          "error_values": {
+            "MS_FAULT=1": "主从配置冲突 — 两端都设为 master 或 slave",
+            "LOCAL_RX_OK=0": "本端接收异常 — 检查接收差分对和数据线路",
+            "REMOTE_RX_OK=0": "对端接收异常 — 告知对端检查其 RX 路径"
+          }
+        },
+        {
+          "name": "PHY_EXT_STATUS",
+          "offset": "0x0F",
+          "address": "PHY_REG_0x0F",
+          "width": 16,
+          "access": "RO",
+          "description": "Extended Status Register",
+          "fields": [
+            {
+              "name": "1000BT_XFD",
+              "bits": "15",
+              "description": "1000BASE-X Full Duplex support"
+            },
+            {
+              "name": "1000BT_XHD",
+              "bits": "14",
+              "description": "1000BASE-X Half Duplex support"
+            },
+            {
+              "name": "1000BT_TFD",
+              "bits": "13",
+              "description": "1000BASE-T Full Duplex support"
+            },
+            {
+              "name": "1000BT_THD",
+              "bits": "12",
+              "description": "1000BASE-T Half Duplex support"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

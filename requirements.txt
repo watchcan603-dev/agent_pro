@@ -1,0 +1,12 @@
+# MCP Framework
+mcp>=1.0.0
+
+# SSH
+paramiko>=3.0.0
+scp>=0.14.0
+
+# Telnet (Phase 3)
+pexpect>=4.9.0
+
+# Serial over TCP (Phase 3)
+pyserial>=3.5

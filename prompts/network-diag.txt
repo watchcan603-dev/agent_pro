@@ -1,0 +1,244 @@
+=== 网口调试专家 ===
+
+(This is a domain expert guide. Load into your agent context when debugging network-diag issues.)
+
+
+以太网 / 转发芯片链路问题诊断。覆盖 MAC → PHY → DMA → 统计计数器完整链路。
+
+## 依赖的 MCP 工具
+
+| 工具 | 用途 |
+|------|------|
+| `device_exec` | 执行 ip/ethtool/mii-tool 命令 |
+| `reg_read` / `reg_dump_block` | 读 MAC/PHY/DMA 寄存器 |
+| `reg_indirect_read` | 读转发芯片统计表/MAC 地址表 |
+| `reg_db_query` | 查询寄存器字段含义 |
+| `dmesg_get` | 内核网络驱动日志 |
+| `log_file_tail` | 系统网络日志 |
+
+## 诊断思路
+
+遇到网络问题时，按 OSI 层次从低到高排查：
+
+```
+物理层 (PHY) → MAC 层 → DMA 层 → 软件驱动 → 应用
+```
+
+## 诊断工具速查
+
+| 工具 | 用途 |
+|------|------|
+| `reg_db_list_blocks` | 查看可用的寄存器模块 |
+| `reg_db_query` | 查询寄存器字段定义和错误模式 |
+| `reg_read` | 读单个寄存器 + 数据库解读 |
+| `reg_read_range` | 批量读连续寄存器 |
+| `reg_dump_block` | 导出整个模块所有寄存器（带诊断） |
+| `reg_indirect_read` | 间接读表（统计表/MAC 地址表） |
+| `ethtool eth0` | PHY 链路状态 |
+| `ethtool -S eth0` | 网卡统计计数器 |
+| `ip link show` | 接口状态 |
+| `dmesg_get` | 内核驱动日志 |
+
+## 标准诊断流程
+
+### Step 1: 物理链路检查
+
+```bash
+# 接口是否 UP
+ip link show eth0
+
+# PHY 状态
+ethtool eth0
+# 关键字段: Link detected, Speed, Duplex, Auto-negotiation
+
+# PHY 寄存器 → 运行 reg_dump_block(session_id, "phy")
+# 关注:
+#   PHY_BMSR.LINK_STATUS — 0=链路DOWN
+#   PHY_BMSR.AN_COMPLETE — 0=自协商失败
+#   PHY_1000_STATUS.LOCAL_RX_OK / REMOTE_RX_OK
+```
+
+**常见 PHY 问题：**
+
+| 现象 | 可能原因 | 检查方法 |
+|------|---------|---------|
+| Link always down | 网线断开 / PHY 未供电 / 时钟异常 | `ethtool eth0` → Link detected: no |
+| 自协商失败 | 对端不支持自协商或速率不匹配 | `PHY_BMSR.AN_COMPLETE=0` |
+| 只协商出 10M/HD | 线路质量问题 | `PHY_AN_LPA` 查看对端能力 |
+| 大量 CRC 错误 | 信号完整性/EMC 干扰 | `ethtool -S eth0 \| grep crc` |
+
+### Step 2: MAC 层检查
+
+```bash
+# 读 MAC 配置寄存器
+reg_read(session_id, "0xFE010000")  → GMAC_MAC_CONFIG
+reg_read(session_id, "0xFE010004")  → GMAC_MAC_FRAME_FILTER
+reg_read(session_id, "0xFE010018")  → GMAC_FLOW_CTRL
+```
+
+**关键字段解读：**
+
+```
+GMAC_MAC_CONFIG:
+  RE=0 → 接收器关闭 → 收不到任何帧
+  TE=0 → 发送器关闭 → 发不出帧
+  DM=0 → 半双工 → 正常情况下应是全双工
+  LM=1 → 内部环回 → 正常通信时必须为 0
+  PS=1 → RMII 模式, PS=0 → MII 模式
+
+GMAC_FRAME_FILTER:
+  PR=0 → 没有开启混杂模式（正常）
+  PBF=1 → 正在接收错误帧（用于 debug）
+  DBF=1 → 广播帧被丢弃（ARP/DHCP 会失败）
+
+GMAC_FLOW_CTRL:
+  RFE=0 → 接收流控关闭 → 可能因流控丢包
+  TFE=0 → 发送流控关闭 → 不发送 pause 帧
+```
+
+### Step 3: DMA 层检查
+
+```bash
+reg_read_range(session_id, "0xFE011000", 6)  → DMA 寄存器组
+```
+
+**关键字段：**
+
+```
+GMAC_DMA_STATUS:
+  TPS=1 → TX 引擎停止 → TX 描述符链表问题
+  RPS=1 → RX 引擎停止 → RX 缓冲区描述符问题
+  TU=1  → TX Underflow → FIFO 空了，DMA 跟不上
+  OVF=1 → RX Overflow → FIFO 满了，数据包丢失
+  RU=1  → RX Buffer Unavailable → 驱动没分配 buffer
+  FBI=1 → AXI 总线致命错误 → 硬件问题
+```
+
+### Step 4: 统计计数器分析
+
+```bash
+# 网卡统计（丢包/错误）
+ethtool -S eth0
+
+# MMC 寄存器
+reg_dump_block(session_id, "gmac_stats")
+```
+
+**关键计数器：**
+
+| 计数器 | 含义 | 排查方向 |
+|--------|------|---------|
+| rx_crc_errors | CRC 校验错误 | 物理链路质量 |
+| rx_fifo_errors | FIFO 溢出丢包 | DMA 配置/中断延迟 |
+| rx_missed_errors | 主机来不及取走丢包 | 驱动 RX poll 频率 |
+| tx_fifo_errors | TX FIFO underrun | DMA 带宽不足 |
+| tx_aborted_errors | TX 被中止 | 冲突过多或 DMA 问题 |
+| rx_length_errors | 帧长度错误 | MTU 不匹配或 jabber |
+
+## 常见故障诊断速查表
+
+### 故障: 链路不通 (NO-CARRIER)
+
+```
+诊断链路:
+  1. ip link show eth0 → <NO-CARRIER>
+  2. ethtool eth0 → Link detected: no
+  3. 检查 PHY_BMSR.LINK_STATUS (应为 1)
+  4. 检查 PHY_BMCR.POWER_DOWN (应为 0)
+  5. 检查 PHY_BMCR.ISOLATE (应为 0)
+  6. 检查 GMAC_MAC_CONFIG.RE + TE (均应置 1)
+  7. 检查 GMAC_GMII_ADDR 的 MDIO 通信
+```
+
+### 故障: 丢包严重
+
+```
+诊断链路:
+  1. ethtool -S eth0 → 查看各计数器
+  2. reg_dump_block(session_id, "gmac_stats") → CRC/align/FIFO 错误
+  3. GMAC_DMA_STATUS → 是否有 TU/OVF/RU 等标志
+  4. 如果 rx_crc_errors > 0:
+     → 物理链路问题, 检查 PCB 走线/端接/EMC
+  5. 如果 rx_fifo_errors > 0:
+     → DMA 来不及搬数据, 增大 RX ring buffer
+     → 检查中断延迟 (cat /proc/interrupts | grep eth)
+  6. 如果 rx_missed_errors > 0:
+     → 驱动处理不及时, 增大 NAPI weight
+     → 提高 CPU 频率或调度优先级
+```
+
+### 故障: 能 ping 通但 TCP 吞吐低
+
+```
+诊断链路:
+  1. 检查 GMAC_MAC_CONFIG.DM → 应为 1 (全双工)
+  2. 检查 GMAC_MAC_CONFIG.IPG → 帧间隔
+  3. 检查 GMAC_FLOW_CTRL.RFE + TFE → 流控开启
+  4. 检查 GMAC_DMA_BUS_MODE.PBL → Burst 长度
+  5. ethtool -k eth0 → 查看 TSO/GSO/GRO 卸载状态
+  6. cat /proc/interrupts → 检查中断是否绑定到单核
+```
+
+### 故障: 间接读表场景 (转发芯片)
+
+很多转发芯片的统计寄存器需要通过 **写索引 → 读数据** 的方式访问：
+
+```
+# 读取 MAC 地址表项 0x10
+reg_indirect_read(session_id,
+    index_reg="0xMAC_TABLE_INDEX",   # 先写索引
+    data_reg="0xMAC_TABLE_DATA",     # 再读数据
+    index=0x10)
+
+# 遍历统计表
+for i in range(0, 256):
+    result = reg_indirect_read(session_id,
+        index_reg="0xSTAT_INDEX",
+        data_reg="0xSTAT_DATA",
+        index=i)
+    if result['data_decimal'] > 0:
+        print(f"Table[{i}] = {result['data_value']}")
+```
+
+## 扩展寄存器数据库
+
+当拿到新的芯片手册时，按以下 JSON 格式添加寄存器定义：
+
+```json
+{
+  "chip": "芯片名",
+  "blocks": [{
+    "name": "block_name",
+    "base_address": "0x...",
+    "description": "功能描述",
+    "registers": [{
+      "name": "REG_NAME",
+      "offset": "0x...",
+      "address": "0x...",
+      "width": 32,
+      "access": "RW",
+      "description": "寄存器功能描述",
+      "fields": [
+        {"name": "FIELD", "bits": "3:0", "description": "字段含义"}
+      ],
+      "notes": "诊断提示",
+      "error_values": {
+        "FIELD=0": "含义：字段为0时的问题",
+        "FIELD>100": "含义：字段超过阈值时的问题"
+      }
+    }]
+  }]
+}
+```
+
+将文件放到 `mcp_server/registers/` 目录下，MCP server 启动时会自动加载。然后在 server.py 的 `_reg_files` 列表中添加文件名。
+
+## 寄存器数据库文件规范
+
+- 文件名: `<chip>_regs.json`
+- `address`: 寄存器物理地址。对于 MDIO/SPI/I2C 访问的寄存器，使用 `PHY_REG_0xNN` 等符号地址。
+- `error_values`: 支持三种格式:
+  - `"FIELD=0"`: 字段等于特定值时报错
+  - `"FIELD>100"`: 字段大于阈值时报错
+  - `"FIELD<5"`: 字段小于阈值时报错
+- `fields[].bits`: 支持 `"N"` (单 bit) 或 `"HIGH:LOW"` (bit 范围) 两种格式

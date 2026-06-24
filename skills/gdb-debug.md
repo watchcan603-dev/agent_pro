@@ -1,0 +1,123 @@
+# GDB 调试助手
+
+通过 gdbserver + cross-gdb 远程调试 ARM Linux 程序的知识库。
+
+## 标准工作流
+
+### 1. 在设备端启动 gdbserver
+
+```bash
+# 附加到正在运行的进程
+gdbserver :2345 --attach <PID>
+
+# 启动新程序并调试
+gdbserver :2345 /path/to/myapp
+
+# 带参数启动
+gdbserver :2345 /path/to/myapp --arg1 --arg2
+```
+
+### 2. 在 PC 端连接 GDB
+
+```bash
+# 启动交叉 GDB 并连接
+arm-linux-gnueabihf-gdb myapp.elf
+
+(gdb) target remote 192.168.137.74:2345
+(gdb) continue
+```
+
+### 3. 常用 GDB 命令
+
+```gdb
+# 断点
+break main                  # 在 main 函数设断点
+break file.c:123            # 在特定文件的第 123 行
+break *0x80001234           # 在绝对地址设断点（硬件断点）
+condition 1 x > 100         # 条件断点：当 x > 100 时触发
+watch myvar                 # 监视变量变化
+
+# 运行
+continue                    # 继续执行
+step                        # 单步进入
+next                        # 单步跳过
+finish                      # 执行到当前函数返回
+
+# 查看状态
+print myvar                 # 打印变量值
+print/x $pc                 # 打印 PC 寄存器（十六进制）
+info registers              # 显示所有寄存器
+backtrace                   # 查看调用栈
+info threads                # 查看所有线程
+thread 2                    # 切换到线程 2
+
+# 内存
+x/16x $sp                   # 查看栈顶 16 个字（十六进制）
+x/s 0x80001000              # 查看地址处的字符串
+```
+
+## ARM 寄存器速查
+
+| 寄存器 | 用途 | 调试意义 |
+|--------|------|---------|
+| PC (R15) | 程序计数器 | "崩溃在哪一行" |
+| LR (R14) | 链接寄存器 | "谁调用了这个函数" |
+| SP (R13) | 栈指针 | 栈溢出检测 |
+| CPSR | 当前程序状态 | 查看 CPU 模式（User/SVC/IRQ） |
+| R0-R3 | 函数参数/返回值 | 查看传入参数 |
+
+## Backtrace 分析
+
+### 正常 Backtrace
+```
+#0  my_function (arg=0x1234) at file.c:42
+#1  caller_function () at file.c:100
+#2  main () at main.c:15
+```
+第 0 帧是崩溃点，#1 是调用者，#2 是上上级。
+
+### 栈溢出特征
+```
+#0  0x00000000 in ?? ()
+#1  0xdeadbeef in ?? ()
+```
+栈被写坏，无法正确回溯。用 `x/64x $sp` 检查栈内容。
+
+### 非法指针特征
+```
+#0  0x12345678 in ?? ()
+Cannot access memory at address 0x12345678
+```
+函数指针被破坏。检查 LR 寄存器找上一步调用位置。
+
+## 内核模块调试 (kgdb)
+
+```bash
+# 设备端：启用 kgdb
+echo ttyS0 > /sys/module/kgdboc/parameters/kgdboc
+echo g > /proc/sysrq-trigger
+
+# PC 端：
+arm-linux-gnueabihf-gdb vmlinux
+(gdb) target remote /dev/ttyUSB0
+(gdb) lx-symbols  # 加载模块符号
+```
+
+## GDB/MI 模式（供 MCP tool 使用）
+
+GDB/MI 使用 `-i=mi` 启动，输出为机器可读的 JSON-like 格式：
+```
+gdb -i=mi myapp.elf
+-target remote 192.168.137.74:2345
+-break-insert main
+-exec-continue
+-data-evaluate-expression myvar
+```
+
+常用 MI 命令：
+- `-break-insert <location>` — 设置断点
+- `-exec-continue` — 继续执行
+- `-exec-next` / `-exec-step` — 单步
+- `-stack-list-frames` — 获取调用栈
+- `-data-evaluate-expression <expr>` — 求值
+- `-data-list-register-values x` — 读取寄存器

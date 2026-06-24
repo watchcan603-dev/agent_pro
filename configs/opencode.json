@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "embed-tool": {
+      "command": "python3",
+      "args": [
+        "-m",
+        "mcp_server.server"
+      ],
+      "cwd": "/root/embed_tool"
+    }
+  }
+}

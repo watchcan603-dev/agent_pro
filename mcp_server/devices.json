@@ -1,0 +1,18 @@
+{
+  "devices": [
+    {
+      "id": "my-board",
+      "name": "我的 ARM 开发板",
+      "host": "192.168.1.100",
+      "type": "ssh",
+      "port": 22,
+      "username": "root",
+      "auth": {
+        "method": "password",
+        "password": "your_password_here"
+      },
+      "tags": ["arm", "cortex-a"],
+      "notes": "修改 host 和 password 为你设备的实际值。type: ssh / telnet / serial"
+    }
+  ]
+}
