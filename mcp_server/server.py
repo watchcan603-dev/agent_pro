@@ -42,6 +42,7 @@ mcp = FastMCP(
 
 ## 核心工具
 - device_list / device_connect / device_disconnect — 连接管理
+- device_register / device_deregister / device_update — 设备注册与配置
 - device_exec — 执行任意 Shell 命令 (最常用)
 - device_info — 查看系统信息
 - file_upload / file_download — SCP 文件传输

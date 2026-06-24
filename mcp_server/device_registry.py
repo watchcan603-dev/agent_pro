@@ -115,6 +115,62 @@ class DeviceRegistry:
                 return dev
         return None
 
+    def _save(self) -> None:
+        """Persist current device list back to the JSON configuration file."""
+        data = {
+            "devices": [
+                {
+                    "id": d.id,
+                    "name": d.name,
+                    "host": d.host,
+                    "type": d.type,
+                    "port": d.port,
+                    "username": d.username,
+                    "tags": d.tags,
+                    "notes": d.notes,
+                    **({"auth": {"method": "password", "password": d.password}} if d.password else {}),
+                    **({"auth": {"method": "key", "key_path": d.key_path}} if d.key_path else {}),
+                    **({"baudrate": d.baudrate} if d.type in ("serial-tcp",) else {}),
+                }
+                for d in self._devices.values()
+            ]
+        }
+        os.makedirs(os.path.dirname(self._config_path), exist_ok=True)
+        with open(self._config_path, "w") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+
+    def add(self, device: DeviceInfo) -> bool:
+        """Register a new device. Returns False if the device ID already exists."""
+        if device.id in self._devices:
+            return False
+        self._devices[device.id] = device
+        self._save()
+        return True
+
+    def remove(self, device_id: str) -> bool:
+        """Remove a device by ID. Returns False if not found."""
+        if device_id not in self._devices:
+            return False
+        del self._devices[device_id]
+        self._save()
+        return True
+
+    def update(self, device_id: str, **fields) -> Optional[DeviceInfo]:
+        """Update fields on an existing device and persist. Returns the updated device or None."""
+        if device_id not in self._devices:
+            return None
+        dev = self._devices[device_id]
+        for key, value in fields.items():
+            if hasattr(dev, key) and value is not None:
+                setattr(dev, key, value)
+        self._save()
+        return dev
+
+    def reload(self) -> int:
+        """Re-read the config file. Returns the new device count."""
+        self._load()
+        return len(self._devices)
+
     @property
     def device_count(self) -> int:
         return len(self._devices)
