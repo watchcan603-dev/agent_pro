@@ -227,23 +227,39 @@ MCPEOF
         ;;
 
     opencode)
-        # OpenCode: copy configs/opencode.json to ~/.opencode/mcp.json or similar
-        OPCONF="$PROJECT_DIR/configs/opencode.json"
-        if [[ -f "$OPCONF" ]]; then
-            # Update cwd in template
-            $PYTHON -c "
-import json
-with open('$OPCONF') as f: cfg = json.load(f)
-cfg['mcpServers']['embed-tool']['cwd'] = '$PROJECT_DIR'
-with open('$OPCONF', 'w') as f: json.dump(cfg, f, indent=2)
-print('OK')
-" 2>/dev/null
-            info "OpenCode: 配置模板已更新: $OPCONF"
+        # OpenCode: opencode.json already in project root
+        if [[ -f "$PROJECT_DIR/opencode.json" ]]; then
+            info "OpenCode: opencode.json 已就绪 (自动加载 MCP server + skills)"
             echo ""
-            echo "  将此配置合并到 OpenCode 的 MCP 配置文件中。"
-            echo "  参考 OpenCode 文档了解 MCP 配置路径。"
+            echo "  项目根目录 opencode.json 已配置:"
+            echo "    - MCP server: 24 个调试工具自动注册"
+            echo "    - Instructions: AGENTS.md + prompts/ 知识库加载"
+            echo "    - Skills: .opencode/skills/ 下 8 个领域专家自动发现"
+            echo ""
+            echo "  使用方法:"
+            echo "    cd $PROJECT_DIR && opencode"
+            echo ""
+            echo "  如需全局配置 (所有项目可用):"
+            echo "    将 configs/opencode.json 的 MCP 配置合并到 ~/.config/opencode/opencode.json"
         else
-            warn "OpenCode 配置模板不存在，请手动配置"
+            # Fallback: create opencode.json in project root
+            cat > "$PROJECT_DIR/opencode.json" << 'OCEOF'
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["AGENTS.md", "prompts/*.txt"],
+  "mcp": {
+    "embed-tool": {
+      "type": "local",
+      "command": ["python3", "-m", "mcp_server.server"],
+      "cwd": "."
+    }
+  }
+}
+OCEOF
+            info "OpenCode: 已创建 opencode.json (MCP server + skills 配置)"
+            echo ""
+            echo "  使用方法:"
+            echo "    cd $PROJECT_DIR && opencode"
         fi
         ;;
 

@@ -2,20 +2,21 @@
 
 AI-driven remote debug assistant for ARM Linux embedded devices.
 
-Supports: **Claude Code**, **OpenCode**, and any **MCP-compatible agent**.
+Supports: **OpenCode**, **Claude Code**, and any **MCP-compatible agent**.
 
 ## Architecture
 
 ```
-Agent (Claude Code / OpenCode / Cursor / ...)
+Agent (OpenCode / Claude Code / Cursor / ...)
   │
   ├── MCP Protocol ──→ mcp_server/  (24 tools)
   │                    ├── transports/   SSH / Telnet / Serial
   │                    ├── sessions/     Connection pool + GDB mode
   │                    └── tools/        Execution / Logging / Registers / GDB
   │
-  └── Knowledge ──→ prompts/   (agent-agnostic domain guides)
-                    skills/    (Claude Code skill format)
+  └── Knowledge ──→ .opencode/skills/  (OpenCode native skills)
+                    skills/             (Claude Code compatible)
+                    prompts/            (agent-agnostic domain guides)
 ```
 
 ## Quick Start
@@ -42,11 +43,48 @@ Edit `mcp_server/devices.json`:
 
 ### 3. Configure your agent
 
+**OpenCode** (recommended):
+- `opencode.json` in project root auto-configures MCP server and loads skills
+- Domain guides auto-loaded via `prompts/*.txt` in instructions config
+- Skills available at `.opencode/skills/` — use `/` commands or agent auto-selects
+
 **Claude Code**: Auto-detects `.mcp.json`.  Also reads `skills/` and `CLAUDE.md`.
 
-**OpenCode**: Copy `configs/opencode.json` to your OpenCode config directory.
-
 **Other MCP agents**: Use the standard MCP config format in `configs/mcp-generic.json`.
+
+### OpenCode Quick Setup
+
+```bash
+# 1. Install deps
+pip3 install --break-system-packages paramiko scp pexpect pyserial mcp
+
+# 2. Edit device config
+vim mcp_server/devices.json
+
+# 3. Start opencode in project dir
+cd /path/to/agent_pro
+opencode
+```
+
+The `opencode.json` in project root automatically:
+- Registers the MCP server with 24 tools
+- Loads AGENTS.md and prompts/ as instructions
+- Makes 8 domain skills available via the `skill` tool
+
+## OpenCode Skills (8)
+
+Available via the `skill` tool — opencode auto-discovers these from `.opencode/skills/`:
+
+| Skill | Domain | Use when... |
+|-------|--------|-------------|
+| `network-diag` | Network/Ethernet | eth0 NO-CARRIER, packet loss, CRC errors |
+| `i2c-debug` | I2C bus | I2C device not responding, scan failures |
+| `spi-debug` | SPI/QSPI | SPI flash issues, signal integrity |
+| `boot-analysis` | Boot flow | Kernel panic, driver load failures |
+| `firmware-flash` | Flashing | Firmware updates, dd/fastboot |
+| `log-analysis` | Log analysis | OOM, kernel panics, driver faults |
+| `gdb-debug` | GDB debugging | Remote debug with gdbserver |
+| `register-debug` | Registers | GMAC/PHY/DMA register bit-field decode |
 
 ## Available Tools (24)
 
@@ -62,15 +100,13 @@ Edit `mcp_server/devices.json`:
 
 ## Domain Guides
 
-Generic prompts (any agent): `prompts/` directory  
-Claude Code skills: `skills/` directory
-
-| Domain | File |
-|--------|------|
-| Network/Ethernet debugging | `prompts/network-diag.txt` |
-| I2C bus debugging | `prompts/i2c-debug.txt` |
-| SPI bus debugging | `prompts/spi-debug.txt` |
-| Boot flow analysis | `prompts/boot-analysis.txt` |
-| Firmware flashing | `prompts/firmware-flash.txt` |
-| Log analysis | `prompts/log-analysis.txt` |
-| GDB debugging | `prompts/gdb-debug.txt` |
+| Domain | OpenCode Skill | Claude Skill | Plain Text Prompt |
+|--------|---------------|-------------|-------------------|
+| Network/Ethernet | `.opencode/skills/network-diag/` | `skills/network-diag.md` | `prompts/network-diag.txt` |
+| I2C bus debugging | `.opencode/skills/i2c-debug/` | `skills/i2c-debug.md` | `prompts/i2c-debug.txt` |
+| SPI bus debugging | `.opencode/skills/spi-debug/` | `skills/spi-debug.md` | `prompts/spi-debug.txt` |
+| Boot flow analysis | `.opencode/skills/boot-analysis/` | `skills/boot-analysis.md` | `prompts/boot-analysis.txt` |
+| Firmware flashing | `.opencode/skills/firmware-flash/` | `skills/firmware-flash.md` | `prompts/firmware-flash.txt` |
+| Log analysis | `.opencode/skills/log-analysis/` | `skills/log-analysis.md` | `prompts/log-analysis.txt` |
+| GDB debugging | `.opencode/skills/gdb-debug/` | `skills/gdb-debug.md` | `prompts/gdb-debug.txt` |
+| Register debugging | `.opencode/skills/register-debug/` | `skills/register-debug.md` | `prompts/register-debug.txt` |

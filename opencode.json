@@ -1,0 +1,16 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["AGENTS.md", "prompts/*.txt"],
+  "permission": {
+    "bash": "ask",
+    "edit": "ask",
+    "external_directory": "ask"
+  },
+  "mcp": {
+    "embed-tool": {
+      "type": "local",
+      "command": ["python3", "-m", "mcp_server.server"],
+      "cwd": "."
+    }
+  }
+}

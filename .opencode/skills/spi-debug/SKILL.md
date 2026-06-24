@@ -1,0 +1,103 @@
+---
+name: spi-debug
+description: SPI/QSPI/OSPI bus diagnostics for ARM Linux embedded devices. Covers controller registers, flash read/write, signal integrity, and mode verification.
+---
+
+# SPI 调试专家
+
+SPI/QSPI/OSPI 总线问题诊断。覆盖控制器→总线→外设完整链路。
+
+## 依赖的 MCP 工具
+
+| 工具 | 用途 |
+|------|------|
+| `device_exec` | Shell 命令 / spi-tools |
+| `reg_read` / `reg_dump_block` | SPI 控制器寄存器 |
+| `dmesg_get` | 内核 SPI 驱动日志 |
+| `file_upload` / `file_download` | 上传/下载 SPI flash 镜像 |
+
+## 诊断流程
+
+### Step 1: 确认 SPI 设备和总线
+
+```bash
+# 查看 SPI 设备
+ls /dev/spi* 2>/dev/null || echo "no SPI device nodes"
+
+# 查看内核 SPI 驱动日志
+dmesg_get(session_id, level="err")
+# 过滤 SPI: filter_pattern="spi|SPI"
+
+# 查看 spi-nor / spi-nand 设备
+cat /proc/mtd 2>/dev/null
+```
+
+### Step 2: SPI flash 读写测试
+
+```bash
+# 读取 SPI flash ID (JEDEC ID)
+# 方法1: 通过 MTD
+cat /sys/class/mtd/mtd0/name
+cat /sys/class/mtd/mtd0/size
+
+# 方法2: 直接 spidev
+# 发送 0x9F (Read JEDEC ID) 命令
+echo -ne '\x9F' | dd of=/dev/spidev0.0 bs=1 count=3 2>/dev/null | hexdump -C
+
+# 读取 flash 内容
+dd if=/dev/mtd0 of=/tmp/flash_dump.bin bs=4K count=256
+# 拉到本地分析
+file_download(session_id, "/tmp/flash_dump.bin", "/tmp/flash_dump.bin")
+```
+
+### Step 3: SPI 控制器寄存器诊断
+
+```bash
+reg_dump_block(session_id, "spi0")
+# 关注:
+#   SPI_CTRLR0.TRF_MODE — 传输模式 (0=TX/RX, 1=TX only, 2=RX only)
+#   SPI_CTRLR0.DFS — 数据帧大小 (通常 8 或 32)
+#   SPI_CTRLR0.SCPI_MODE — SPI 模式 (0/1/2/3)
+#   SPI_SR.DCOL — 数据冲突 (同时读写)
+#   SPI_SR.TXE — TX FIFO 空
+#   SPI_SR.RXFF — RX FIFO 满
+#   SPI_TXFTLR / SPI_RXFTLR — FIFO 阈值
+```
+
+### Step 4: SPI 模式验证
+
+```bash
+# 4 种 SPI 模式:
+# Mode 0: CPOL=0, CPHA=0  (最常用)
+# Mode 1: CPOL=0, CPHA=1
+# Mode 2: CPOL=1, CPHA=0
+# Mode 3: CPOL=1, CPHA=1  (常见于 SPI flash)
+
+# 确认设备树配置
+grep -A10 "spi" /proc/device-tree/soc/spi*/status 2>/dev/null
+# 或用 dtc 查看
+dtc -I fs -O dts /proc/device-tree 2>/dev/null | grep -A20 spi
+```
+
+## 常见故障速查
+
+| 现象 | 可能原因 | 诊断方法 |
+|------|---------|---------|
+| flash ID 全是 0xFF/0x00 | CS 未拉低 / MISO 断路 / 设备未上电 | 示波器量 CS/MOSI/MISO/CLK |
+| 读回数据全是 0x00 | MISO 脚被拉低或浮空 | 万用表量 MISO 对地电阻 |
+| 写入后读回不一致 | 写入未完成 / 地址错误 / 未擦除 | 检查 BUSY 状态, 先擦除再写 |
+| `DCOL=1` 数据冲突 | 同时进行读写操作 | 检查驱动逻辑 |
+| FIFO 溢出/不足 | DMA 阈值配置不对 / 时钟太快 | 调大 FIFO 阈值, 降 SPI 时钟 |
+| SPI flash 分区不可见 | 设备树分区配置错误 / MTD 驱动未加载 | `cat /proc/mtd`, 检查 dts |
+
+## SPI 信号完整性排查
+
+```
+用示波器逐脚检查:
+  CS:   传输前拉低, 传输后拉高
+  CLK:  稳定方波, 频率 = 配置值
+  MOSI: 数据在 CLK 上升沿(或下降沿, 取决于 CPHA)稳定
+  MISO: 同上
+  WP:   写保护, 低有效 — 需拉高才能写入
+  HOLD: 保持, 低有效 — 需拉高才能正常操作
+```
