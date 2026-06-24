@@ -1,0 +1,51 @@
+{
+  "cpu": "rk3566",
+  "family": "Rockchip RK3566",
+  "arch": "aarch64",
+  "vendor": "Rockchip",
+  "flash_type": "mtd",
+  "partitions": [
+    {
+      "name": "u-boot",
+      "mtd": "/dev/mtd0",
+      "description": "U-Boot bootloader (TPL/SPL + U-Boot proper)",
+      "max_size_mb": 4,
+      "file_hint": "u-boot*.bin, idbloader.img",
+      "danger": true,
+      "notes": "损坏将导致设备无法启动，烧写前务必确认文件正确"
+    },
+    {
+      "name": "u-boot-env",
+      "mtd": "/dev/mtd1",
+      "description": "U-Boot 环境变量",
+      "max_size_mb": 0.5,
+      "file_hint": "uboot.env",
+      "notes": "通常不需要单独烧写，U-Boot 会自动初始化"
+    },
+    {
+      "name": "kernel",
+      "mtd": "/dev/mtd2",
+      "description": "Linux 内核镜像",
+      "max_size_mb": 32,
+      "file_hint": "*Image*, zImage, uImage",
+      "notes": "需与设备树 dtb 版本匹配"
+    },
+    {
+      "name": "dtb",
+      "mtd": "/dev/mtd3",
+      "description": "设备树文件",
+      "max_size_mb": 1,
+      "file_hint": "*.dtb",
+      "notes": "须与内核版本和板卡型号匹配"
+    },
+    {
+      "name": "rootfs",
+      "mtd": "/dev/mtd4",
+      "description": "根文件系统",
+      "max_size_mb": 512,
+      "file_hint": "rootfs*, *.ubi, *.ubifs",
+      "danger": true,
+      "notes": "烧写前需确认设备已从其他存储启动（如 SD 卡）"
+    }
+  ]
+}

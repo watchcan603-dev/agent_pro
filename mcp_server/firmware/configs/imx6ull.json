@@ -1,0 +1,43 @@
+{
+  "cpu": "imx6ull",
+  "family": "NXP i.MX6ULL",
+  "arch": "armv7l",
+  "vendor": "NXP",
+  "flash_type": "mtd",
+  "partitions": [
+    {
+      "name": "u-boot",
+      "mtd": "/dev/mtd0",
+      "description": "U-Boot bootloader",
+      "max_size_mb": 2,
+      "file_hint": "u-boot*.imx, u-boot*.bin",
+      "danger": true,
+      "notes": "i.MX 系列需使用 .imx 格式（带 IVT header），损坏将变砖"
+    },
+    {
+      "name": "kernel",
+      "mtd": "/dev/mtd1",
+      "description": "Linux 内核 (zImage)",
+      "max_size_mb": 16,
+      "file_hint": "zImage, uImage",
+      "notes": "需匹配设备树"
+    },
+    {
+      "name": "dtb",
+      "mtd": "/dev/mtd2",
+      "description": "设备树文件",
+      "max_size_mb": 1,
+      "file_hint": "*.dtb",
+      "notes": ""
+    },
+    {
+      "name": "rootfs",
+      "mtd": "/dev/mtd3",
+      "description": "根文件系统 (UBIFS)",
+      "max_size_mb": 256,
+      "file_hint": "rootfs*.ubi",
+      "danger": true,
+      "notes": "需先 ubiattach，烧写前确认非当前挂载分区"
+    }
+  ]
+}

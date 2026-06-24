@@ -47,6 +47,12 @@ mcp = FastMCP(
 - device_info — 查看系统信息
 - file_upload / file_download — SCP 文件传输
 
+## 固件烧写
+- device_flash_list_cpus — 列出支持的 CPU 类型和分区布局
+- device_flash — 擦除并烧写指定分区 (flash_erase + cat)
+- device_flash_check — 检查 MTD 分区状态
+- 流程: file_upload 上传固件 → device_flash(sid, "rk3566", "kernel", "/tmp/Image")
+
 ## 诊断工具
 - dmesg_get / dmesg_follow / log_file_tail / journalctl_get — 日志采集
 - reg_read / reg_read_range / reg_dump_block — 寄存器读写
