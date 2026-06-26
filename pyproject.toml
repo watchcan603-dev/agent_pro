@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "embed-tool"
+version = "0.1.0"
+description = "MCP remote debug assistant for ARM Linux embedded devices"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Embed Tool Contributors" }]
+keywords = ["mcp", "embedded", "arm", "debug", "ssh", "serial", "gdb"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Debuggers",
+]
+dependencies = [
+  "mcp>=1.0.0",
+  "paramiko>=3.0.0",
+  "scp>=0.14.0",
+  "pexpect>=4.9.0",
+  "pyserial>=3.5",
+]
+
+[project.urls]
+Homepage = "https://github.com/embed-tool/embed-tool"
+Documentation = "https://github.com/embed-tool/embed-tool#readme"
+
+[project.scripts]
+embed-tool-mcp = "mcp_server.server:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["mcp_server*"]
+
+[tool.setuptools.package-data]
+mcp_server = ["devices.json", "registers/*.json", "firmware/configs/*.json"]

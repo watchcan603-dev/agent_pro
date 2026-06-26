@@ -2,6 +2,9 @@
 
 import json
 import os
+import shutil
+from importlib import resources
+from pathlib import Path
 from typing import Optional, Dict, Any, List
 from dataclasses import dataclass, field
 
@@ -56,12 +59,44 @@ class DeviceInfo:
 class DeviceRegistry:
     """Manages the device configuration file and provides lookup methods."""
 
+    @staticmethod
+    def default_config_path() -> str:
+        """Return the writable default device config path.
+
+        A wheel-installed package can live in a read-only site-packages directory,
+        so mutable device definitions default to the user's config directory. The
+        bundled ``devices.json`` remains a template copied on first use.
+        """
+        env_path = os.environ.get("EMBED_TOOL_DEVICES")
+        if env_path:
+            return env_path
+        config_home = os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config"))
+        return os.path.join(config_home, "embed-tool", "devices.json")
+
+    @staticmethod
+    def _bundled_config_path() -> str:
+        return str(resources.files("mcp_server").joinpath("devices.json"))
+
     def __init__(self, config_path: Optional[str] = None):
         if config_path is None:
-            config_path = os.path.join(os.path.dirname(__file__), "devices.json")
+            config_path = self.default_config_path()
         self._config_path = config_path
         self._devices: Dict[str, DeviceInfo] = {}
+        self._ensure_config_exists()
         self._load()
+
+    def _ensure_config_exists(self) -> None:
+        """Create a writable config file from the bundled template if needed."""
+        if os.path.exists(self._config_path):
+            return
+
+        Path(self._config_path).parent.mkdir(parents=True, exist_ok=True)
+        bundled = self._bundled_config_path()
+        if os.path.exists(bundled):
+            shutil.copyfile(bundled, self._config_path)
+        else:
+            with open(self._config_path, "w") as f:
+                json.dump({"devices": []}, f, ensure_ascii=False, indent=2)
 
     def _load(self) -> None:
         """Load devices from the JSON configuration file."""
