@@ -9,8 +9,7 @@
   "mcp": {
     "embed-tool": {
       "type": "local",
-      "command": ["python3", "-m", "mcp_server.server"],
-      "cwd": "."
+      "command": ["embed-tool-mcp"]
     }
   }
 }

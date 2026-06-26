@@ -23,11 +23,11 @@ Agent (OpenCode / Claude Code / Cursor / ...)
 
 ### 1. Install dependencies
 ```bash
-pip3 install --break-system-packages paramiko scp pexpect pyserial mcp
+python3 -m build --wheel && python3 -m pip install dist/embed_tool-*.whl
 ```
 
 ### 2. Configure your device
-Edit `mcp_server/devices.json`:
+Edit `~/.config/embed-tool/devices.json`:
 ```json
 {
   "devices": [{
@@ -56,10 +56,10 @@ Edit `mcp_server/devices.json`:
 
 ```bash
 # 1. Install deps
-pip3 install --break-system-packages paramiko scp pexpect pyserial mcp
+python3 -m build --wheel && python3 -m pip install dist/embed_tool-*.whl
 
 # 2. Edit device config
-vim mcp_server/devices.json
+vim ~/.config/embed-tool/devices.json
 
 # 3. Start opencode in project dir
 cd /path/to/agent_pro

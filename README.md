@@ -64,26 +64,32 @@ Agent 自动: device_connect → reg_dump_block("gmac_mac") → reg_dump_block("
 
 ## 快速开始
 
-### 安装
+### 安装（推荐 wheel）
+
+某些 Agent 只能加载已安装的 wheel 包。Embed Tool 现在提供标准 Python 打包配置，并安装 `embed-tool-mcp` 命令作为 MCP Server 入口。
 
 ```bash
 git clone <repo-url> embed_tool && cd embed_tool
-bash install.sh
+python3 -m pip install --upgrade build
+python3 -m build --wheel
+python3 -m pip install dist/embed_tool-*.whl
 ```
 
-脚本自动完成：Python 依赖安装 → MCP Server 验证 → 设备配置模板 → Agent MCP 配置。
+安装后可直接测试 MCP Server 入口：
 
 ```bash
-# 指定 Agent 类型
-bash install.sh --agent claude       # Claude Code
-bash install.sh --agent opencode     # OpenCode
-bash install.sh --agent generic      # 通用 MCP
-bash install.sh --mirror https://pypi.tuna.tsinghua.edu.cn/simple  # 自定义镜像
+embed-tool-mcp
+```
+
+开发环境也可以使用 editable 安装：
+
+```bash
+python3 -m pip install -e .
 ```
 
 ### 配置设备
 
-编辑 `mcp_server/devices.json`：
+编辑默认设备配置 `~/.config/embed-tool/devices.json`（也可以用环境变量 `EMBED_TOOL_DEVICES` 指定其他路径）：
 
 ```json
 {
@@ -240,43 +246,29 @@ Agent:
 
 ```
 embed_tool/
-├── install.sh                    # 一键安装脚本
+├── pyproject.toml                # wheel 构建与依赖声明
+├── MANIFEST.in                   # sdist/wheel 数据文件清单
 ├── README.md                     # 本文件
 ├── AGENTS.md                     # 多 Agent 说明
-├── SUMMARY.md                    # 项目总结与展望
+├── CLAUDE.md                     # Claude Code 项目配置
 ├── .mcp.json                     # Claude Code MCP 配置
-├── requirements.txt
+├── opencode.json                 # OpenCode MCP + instructions 配置
+├── requirements.txt              # 兼容旧环境的依赖清单
 │
-├── mcp_server/                   # MCP Server
-│   ├── server.py                 #   薄入口
-│   ├── devices.json              #   设备清单
-│   ├── device_registry.py
-│   ├── transports/               #   协议适配层
-│   │   ├── base.py               #     BaseTransport 接口
-│   │   ├── ssh.py                #     SSH (paramiko + SCP)
-│   │   ├── telnet.py             #     Telnet (socket)
-│   │   └── serial.py             #     Serial/COM (pyserial)
-│   ├── sessions/                 #   会话管理层
-│   │   ├── session.py            #     Session 数据类
-│   │   ├── pool.py               #     ConnectionPool + GDB 追踪
-│   │   └── gdb_session.py        #     GDB 交互模式管理器
-│   ├── tools/                    #   领域工具
-│   │   ├── connection.py         #     device_list / connect / disconnect
-│   │   ├── execution.py          #     device_exec
-│   │   ├── file_transfer.py      #     file_upload / download
-│   │   ├── logging.py            #     dmesg / journalctl
-│   │   ├── registers.py          #     reg_read / dump / indirect
-│   │   ├── gdb.py                #     gdb_launch / exec / close
-│   │   └── serial_ports.py       #     serial_list_ports
-│   └── registers/                #   寄存器数据库
-│       ├── reg_db.py             #     数据库引擎
-│       └── *.json                #     芯片寄存器定义
+├── mcp_server/                   # MCP Server Python 包
+│   ├── server.py                 #   `embed-tool-mcp` 入口
+│   ├── devices.json              #   wheel 内置设备模板
+│   ├── device_registry.py        #   默认读取 ~/.config/embed-tool/devices.json
+│   ├── transports/               #   SSH / Telnet / Serial 适配层
+│   ├── sessions/                 #   连接池 + GDB 交互模式
+│   ├── tools/                    #   MCP 工具注册与实现
+│   └── registers/                #   寄存器数据库与 JSON 定义
 │
-├── skills/                       # 领域专家 (Claude Code 格式)
-├── prompts/                      # 领域专家 (纯文本, Agent 无关)
-├── configs/                      # 各 Agent MCP 配置模板
-├── scripts/                      # setup.sh / test_device.py
-└── CLAUDE.md                     # Claude Code 项目配置
+├── .opencode/skills/             # OpenCode 原生 Skills
+├── skills/                       # Claude Code 兼容领域专家
+├── prompts/                      # Agent 无关纯文本领域指南
+├── configs/                      # 通用 MCP 配置模板
+└── scripts/test_device.py        # 设备连通性测试脚本
 ```
 
 ## 扩展指南
@@ -298,9 +290,9 @@ embed_tool/
 
 ### 新增芯片寄存器
 
-1. 在 `registers/` 下创建 `my_chip_regs.json`
+1. 在 `mcp_server/registers/` 下创建 `my_chip_regs.json`
 2. 按 `eth_mac_regs.json` 的格式填入寄存器定义
-3. 在 `server.py` 的 `_reg_files` 列表中添加文件名
+3. 确保该 JSON 文件被包含在包数据中（`pyproject.toml` 已包含 `mcp_server/registers/*.json`）
 
 支持的 error_values 格式：
 ```json
@@ -329,9 +321,8 @@ embed_tool/
 |------|------|
 | `README.md` | 本文件 — 项目概述和快速上手 |
 | `AGENTS.md` | 多 Agent 支持说明 |
-| `SUMMARY.md` | 项目总结、架构决策、扩展方向 |
 | `CLAUDE.md` | Claude Code 专用项目配置 |
-| `install.sh --help` | 安装脚本选项 |
+| `pyproject.toml` | wheel 构建、依赖、`embed-tool-mcp` 命令入口 |
 
 ## License
 

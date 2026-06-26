@@ -1,0 +1,6 @@
+include README.md
+include requirements.txt
+recursive-include mcp_server *.json
+recursive-include prompts *.txt
+recursive-include skills *.md
+recursive-include .opencode/skills *.md

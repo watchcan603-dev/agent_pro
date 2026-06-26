@@ -16,14 +16,15 @@ Transports (协议适配) ← SSH / Telnet / Serial / (未来: SSL)
 
 ## 快速开始
 
-### 1. 安装依赖
+### 1. 安装 wheel
 ```bash
-pip3 install --break-system-packages -i https://mirrors.aliyun.com/pypi/simple/ \
-    paramiko scp pexpect pyserial mcp
+python3 -m pip install --upgrade build
+python3 -m build --wheel
+python3 -m pip install dist/embed_tool-*.whl
 ```
 
 ### 2. 配置设备
-编辑 `mcp_server/devices.json`，填入设备 IP 和登录信息。
+编辑 `~/.config/embed-tool/devices.json`，填入设备 IP 和登录信息。也可以设置 `EMBED_TOOL_DEVICES` 指向自定义配置文件。
 
 ### 3. MCP Server 自动加载
 项目根目录 `.mcp.json` 已配好，Claude Code 启动时自动加载。
@@ -74,11 +75,11 @@ pip3 install --break-system-packages -i https://mirrors.aliyun.com/pypi/simple/ 
 embed_tool/
 ├── .mcp.json                     # MCP 配置
 ├── CLAUDE.md
+├── pyproject.toml                  # wheel 构建配置
 ├── requirements.txt
-├── SUMMARY.md
 ├── mcp_server/
-│   ├── server.py                 # 薄入口 (~150行)
-│   ├── devices.json              # 设备清单
+│   ├── server.py                 # embed-tool-mcp 入口
+│   ├── devices.json              # wheel 内置设备模板
 │   ├── device_registry.py
 │   ├── transports/               # 协议适配层
 │   │   ├── base.py               #   BaseTransport 接口

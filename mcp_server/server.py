@@ -12,7 +12,6 @@ Usage:
 
 import json
 import logging
-import os
 import sys
 
 # Quiet down paramiko transport logs
@@ -26,10 +25,7 @@ from .tools import register_all
 
 # ── Global state ──────────────────────────────────────────────────────────────
 
-CONFIG_PATH = os.environ.get(
-    "EMBED_TOOL_DEVICES",
-    os.path.join(os.path.dirname(__file__), "devices.json"),
-)
+CONFIG_PATH = DeviceRegistry.default_config_path()
 
 registry = DeviceRegistry(CONFIG_PATH)
 pool = ConnectionPool()
